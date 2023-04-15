@@ -1,4 +1,9 @@
 import os
+import re
+import deepspeech
+import wave
+from pydub import AudioSegment
+import numpy as np
 
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
@@ -47,9 +52,20 @@ class SignupForm(FlaskForm):
 
 
 # routes
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    return render_template('index.html')
+    if request.method == 'POST':
+        f = request.files['file']
+        print(request.files)
+        f.save(os.path.join(
+            app.config['UPLOAD_FOLDER'], secure_filename(f.filename)))
+        flash('文件上传成功！')
+        flash('文件正在识别，请稍后...')
+        text = infer(f.filename)
+        return render_template('index.html', infer_info="识别结果：" + text)
+    else:
+
+        return render_template('index.html')
 
 
 @login_manager.user_loader
@@ -98,19 +114,39 @@ def signup():
     return render_template('signup.html', form=form)
 
 
-@app.route('/uploader', methods=['GET', 'POST'])
-def uploader():
-    if request.method == 'POST':
-        f = request.files['file']
-        print(request.files)
-        f.save(os.path.join(
-            app.config['UPLOAD_FOLDER'], secure_filename(f.filename)))
+def infer(file):
+    # 定义语音文件路径
+    # mp3 转换 wav
+    audio_path = os.path.join('audio', file)
 
-        flash('文件上传成功！')
-        return render_template('index.html')
-    else:
+    if (audio_path.endswith(".mp3")):
+        pattern = re.compile(r'(.*)\.mp3')
+        match = pattern.match(file)
+        if match:
+            filename = match.group(1)
 
-        return render_template('index.html')
+        wav_audio = AudioSegment.from_file(audio_path, format='mp3').set_frame_rate(
+            16000).set_channels(1).set_sample_width(2)
+        wav_audio.export(os.path.join(
+            'audio', filename + ".wav"), format='wav')
+        audio_path = os.path.join('audio', filename + ".wav")
+        print('*'*100, audio_path)
+
+    # 加载 DeepSpeech 模型
+    model_path = 'DeepSpeech/deepspeech-0.9.3-models.pbmm'
+    beam_width = 500
+    model = deepspeech.Model(model_path)
+    model.beamWidth = beam_width
+
+    # 加载语音文件
+    with wave.open(audio_path, 'rb') as audio_file:
+        audio_data = np.frombuffer(audio_file.readframes(
+            audio_file.getnframes()), np.int16)
+
+    # 将语音转换成文本
+    text = model.stt(audio_data)
+    print("识别结果：", text)
+    return text
 
 
 # run

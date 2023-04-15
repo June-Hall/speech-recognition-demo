@@ -8,8 +8,11 @@
     <div class="alert">{{ message }}</div>
     {% endfor %}
     <h3>主页</h3>
-    <form action="http://localhost:5000/uploader" method="POST" enctype="multipart/form-data">
+    <form action="http://localhost:5000/" method="POST" enctype="multipart/form-data">
     <input type="file" name="file"  />
     <input type="submit" value="提交" />
+    <div>
+      {{ infer_info }}
+    </div>
   </body>
 </html>
