@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Length, EqualTo
-from flask_login import login_user, LoginManager, UserMixin
+from flask_login import login_user
 
 
 # init
@@ -21,11 +21,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-login_manager = LoginManager(app)
+
 # models
-
-
-class User(db.Model, UserMixin):
+class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
@@ -50,11 +48,6 @@ class SignupForm(FlaskForm):
 @app.route('/')
 def index():
     return render_template('index.html')
-
-
-@login_manager.user_loader
-def get_user(ident):
-    return User.query.get(int(ident))
 
 
 @app.route('/signin', methods=['GET', 'POST'])

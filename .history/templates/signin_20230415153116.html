@@ -7,11 +7,11 @@
   <body>
     <h1>登录</h1>
     <form method="post">
-      {{ form.csrf_token }}
       <label for="username">用户名</label>
-      {{ form.username }}
+      <input type="text" id="username" name="username" />
       <label for="password">密码</label>
-      {{ form.password }} {{ form.submit }}
+      <input type="password" id="password" name="password" />
+      <input type="submit" value="登录" />
     </form>
   </body>
 </html>

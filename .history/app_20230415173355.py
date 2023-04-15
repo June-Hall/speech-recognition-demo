@@ -7,7 +7,8 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Length, EqualTo
-from flask_login import login_user, LoginManager, UserMixin
+from flask_login import login_user
+from flask_login import UserMixin
 
 
 # init
@@ -21,7 +22,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-login_manager = LoginManager(app)
 # models
 
 

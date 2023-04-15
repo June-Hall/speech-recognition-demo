@@ -7,10 +7,10 @@
   <body>
     <h1>注册</h1>
     <form method="post">
-      {{ form.csrf_token }}
+      {{ form.hidden_tag() }}
       <label for="username">用户名</label>
       {{ form.username() }} {% if form.username.errors %}
-      <ul>
+      <ul class="errors">
         {% for error in form.username.errors %}
         <li>{{ error }}</li>
         {% endfor %}
@@ -18,7 +18,7 @@
       {% endif %}
       <label for="password">密码</label>
       {{ form.password() }} {% if form.password.errors %}
-      <ul>
+      <ul class="errors">
         {% for error in form.password.errors %}
         <li>{{ error }}</li>
         {% endfor %}
@@ -26,7 +26,7 @@
       {% endif %}
       <label for="confirm_password">确认密码</label>
       {{ form.confirm_password() }} {% if form.confirm_password.errors %}
-      <ul>
+      <ul class="errors">
         {% for error in form.confirm_password.errors %}
         <li>{{ error }}</li>
         {% endfor %}
