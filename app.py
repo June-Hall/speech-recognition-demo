@@ -12,7 +12,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Length, EqualTo
-from flask_login import login_user, LoginManager, UserMixin
+from flask_login import login_user, LoginManager, UserMixin, login_required, logout_user, current_user
 
 
 # init
@@ -55,6 +55,9 @@ class SignupForm(FlaskForm):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
+        if not current_user.is_authenticated:
+            flash('请登录进行操作！')
+            return redirect(url_for('index'))
         f = request.files['file']
         print(request.files)
         f.save(os.path.join(
@@ -114,6 +117,14 @@ def signup():
     return render_template('signup.html', form=form)
 
 
+@app.route('/signout')
+@login_required
+def signout():
+    logout_user()
+    flash('再见!')
+    return redirect(url_for('index'))
+
+
 def infer(file):
     # 定义语音文件路径
     # mp3 转换 wav
@@ -147,6 +158,14 @@ def infer(file):
     text = model.stt(audio_data)
     print("识别结果：", text)
     return text
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('Goodbye.')
+    return redirect(url_for('index'))
 
 
 # run

@@ -8,6 +8,17 @@
     <div class="alert">{{ message }}</div>
     {% endfor %}
     <h3>主页</h3>
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('index') }}">主页</a></li>
+            {% if current_user.is_authenticated %}
+            <li><a href="{{ url_for('signout') }}">登出</a></li>
+            {% else %}
+            <li><a href="{{ url_for('signin') }}">登录</a></li>
+            <li><a href="{{ url_for('signup') }}">注册</a></li>
+            {% endif %}
+        </ul>
+    </nav>
     <form action="http://localhost:5000/" method="POST" enctype="multipart/form-data">
     <input type="file" name="file"  />
     <input type="submit" value="提交" />
