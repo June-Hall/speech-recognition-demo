@@ -2,29 +2,99 @@
 <html>
   <head>
     <title>主页</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css">
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+      type="text/css"
+    />
   </head>
   <body>
     <h1>语音转文字服务器</h1>
     {% for message in get_flashed_messages() %}
     <div class="alert">{{ message }}</div>
     {% endfor %}
+    <div class="alert" id="loading" style="display: none">文件正在上传...</div>
+    <div class="alert" id="load-done" style="display: none">文件上传成功！</div>
+    <div class="alert" id="infering" style="display: none">正在推理文件...</div>
+    <div class="alert" id="infer-success" style="display: none">推理成功！</div>
+    <div class="alert" id="infer-failure" style="display: none">推理失败！</div>
     <nav>
-        <ul>
-            <li><a href="{{ url_for('index') }}">主页</a></li>
-            {% if current_user.is_authenticated %}
-            <li><a href="{{ url_for('signout') }}">登出</a></li>
-            {% else %}
-            <li><a href="{{ url_for('signin') }}">登录</a></li>
-            <li><a href="{{ url_for('signup') }}">注册</a></li>
-            {% endif %}
-        </ul>
+      <ul>
+        <li><a href="{{ url_for('index') }}">主页</a></li>
+        {% if current_user.is_authenticated %}
+        <li><a href="{{ url_for('signout') }}">登出</a></li>
+        {% else %}
+        <li><a href="{{ url_for('signin') }}">登录</a></li>
+        <li><a href="{{ url_for('signup') }}">注册</a></li>
+        {% endif %}
+      </ul>
     </nav>
-    <form action="http://localhost:5000/" method="POST" enctype="multipart/form-data">
-    <input type="file" name="file"  />
-    <input type="submit" value="提交" />
-    <div class="info">
-      {{ infer_info }}
-    </div>
+    {% if current_user.is_authenticated %}
+    <form id="upload-form" enctype="multipart/form-data">
+      <input type="file" name="file" />
+      <input type="button" id="upload-btn" value="提交" />
+    </form>
+    <div id="progress"></div>
+    <div class="info" id="infer-info"></div>
+    {% else %}
+    <h3>请在登录之后进行操作！</h3>
+    {% endif %}
   </body>
 </html>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  $(document).ready(function () {
+    $("#upload-btn").click(function () {
+      var form_data = new FormData($("#upload-form")[0]);
+      var progress_bar = $("#progress");
+      $.ajax({
+        type: "POST",
+        url: "/uploads",
+        data: form_data,
+        contentType: false,
+        cache: false,
+        processData: false,
+        beforeSend: function () {
+          $("#loading").show();
+          setTimeout(function () {
+            $("#load-done").show();
+            $("#infering").show();
+          }, 300);
+        },
+
+        xhr: function () {
+          var xhr = new window.XMLHttpRequest();
+          xhr.upload.addEventListener(
+            "progress",
+            function (evt) {
+              if (evt.lengthComputable) {
+                var percent_complete = evt.loaded / evt.total;
+                percent_complete = parseInt(percent_complete * 100);
+                progress_bar.css("width", percent_complete + "%");
+              }
+            },
+            false
+          );
+          return xhr;
+        },
+        success: function (data) {
+          $("#infer-info").html("识别结果：" + data);
+          $("#loading").hide();
+          $("#load-done").hide();
+          $("#infering").hide();
+          $("#infer-success").show();
+          progress_bar.css("width", "0%");
+        },
+        error: function (xhr, status, error) {
+          alert("上传文件出错 - " + error);
+          $("#loading").hide();
+          $("#load-done").hide();
+          $("#infering").hide();
+          $("#infer-failure").show();
+          progress_bar.css("width", "0%");
+        },
+      });
+    });
+  });
+</script>

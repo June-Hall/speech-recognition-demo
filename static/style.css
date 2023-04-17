@@ -110,3 +110,11 @@ h3,
   padding: 12px 24px;
   border-bottom: 1px solid #ddd;
 }
+
+#progress {
+  width: 0%;
+  height: 5px;
+  background-color: #007bff;
+  transition: width 0.3s ease-in-out;
+  border-radius: 25px;
+}

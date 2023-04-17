@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>404</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+      type="text/css"
+    />
+  </head>
+
+  <body>
+    <h1>语音转文字服务器</h1>
+    <ul>
+      <div class="error">出了点问题... - 400</div>
+      >
+      <span class="float-right">
+        <a href="{{ url_for('index') }}">点击返回主页</a>
+      </span>
+    </ul>
+  </body>
+</html>

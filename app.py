@@ -27,6 +27,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 login_manager = LoginManager(app)
+
 # models
 
 
@@ -54,20 +55,23 @@ class SignupForm(FlaskForm):
 # routes
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    if request.method == 'POST':
-        if not current_user.is_authenticated:
-            flash('请登录进行操作！')
-            return redirect(url_for('index'))
-        f = request.files['file']
-        print(request.files)
-        f.save(os.path.join(
-            app.config['UPLOAD_FOLDER'], secure_filename(f.filename)))
-        flash('文件上传成功！')
-        flash('文件正在识别，请稍后...')
-        text = infer(f.filename)
-        return render_template('index.html', infer_info="识别结果：" + text)
-    else:
-        return render_template('index.html')
+    return render_template('index.html')
+
+
+@app.route('/uploads', methods=['POST'])
+def uploads():
+    try:
+        file = request.files['file']
+        if file.filename == "":
+            raise Exception
+    except Exception:
+        exit()
+    print('hr3')
+    file.save(os.path.join(
+        app.config['UPLOAD_FOLDER'], secure_filename(file.filename)))
+    text = infer(file.filename)
+
+    return text
 
 
 @login_manager.user_loader
@@ -130,29 +134,66 @@ def inject_user():  # 函数名可以随意修改
     return dict(user=user)  # 需要返回字典，等同于 return {'user': user}
 
 
+@app.errorhandler(400)
+def bad_request(e):
+    return render_template('errors/400.html'), 400
+
+
 @app.errorhandler(404)
 def page_not_found(e):
-    user = User.query.first()
-    return render_template('404.html'), 404
+    return render_template('errors/404.html'), 404
+
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('errors/500.html'), 500
 
 
 def infer(file):
     # 定义语音文件路径
     # mp3 转换 wav
     audio_path = os.path.join('audio', file)
+    try:
+        print(audio_path.endswith(".mp3"))
+        if (audio_path.endswith(".mp3")):
+            pattern = re.compile(r'(.*)\.mp3')
+            match = pattern.match(file)
+            if match:
+                filename = match.group(1)
+            wav_audio = AudioSegment.from_file(audio_path, format='mp3').set_frame_rate(
+                16000).set_channels(1).set_sample_width(2)
+            wav_audio.export(os.path.join(
+                'audio', filename + ".wav"), format='wav')
+            audio_path = os.path.join('audio', filename + ".wav")
+            print('*'*100, audio_path)
+        elif (audio_path.endswith(".ogg")):
+            pattern = re.compile(r'(.*)\.ogg')
+            match = pattern.match(file)
+            if match:
+                filename = match.group(1)
+            wav_audio = AudioSegment.from_file(audio_path, format='ogg').set_frame_rate(
+                16000).set_channels(1).set_sample_width(2)
+            wav_audio.export(os.path.join(
+                'audio', filename + ".wav"), format='wav')
+            audio_path = os.path.join('audio', filename + ".wav")
+            print('*'*100, audio_path)
+        elif (audio_path.endswith(".raw")):
+            pattern = re.compile(r'(.*)\.raw')
+            match = pattern.match(file)
+            if match:
+                filename = match.group(1)
+            wav_audio = AudioSegment.from_file(
+                audio_path, format='raw').set_frame_rate(16000).set_channels(1).set_sample_width(2)
+            wav_audio.export(os.path.join(
+                'audio', filename + ".wav"), format='wav')
 
-    if (audio_path.endswith(".mp3")):
-        pattern = re.compile(r'(.*)\.mp3')
-        match = pattern.match(file)
-        if match:
-            filename = match.group(1)
-
-        wav_audio = AudioSegment.from_file(audio_path, format='mp3').set_frame_rate(
-            16000).set_channels(1).set_sample_width(2)
-        wav_audio.export(os.path.join(
-            'audio', filename + ".wav"), format='wav')
-        audio_path = os.path.join('audio', filename + ".wav")
-        print('*'*100, audio_path)
+            audio_path = os.path.join('audio', filename + ".wav")
+            print('*'*100, audio_path)
+        else:
+            raise Exception
+    except Exception:
+        Exception.with_traceback()
+        exit()
 
     # 加载 DeepSpeech 模型
     model_path = 'DeepSpeech/deepspeech-0.9.3-models.pbmm'
