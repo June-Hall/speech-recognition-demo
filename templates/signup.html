@@ -2,10 +2,29 @@
 <html>
   <head>
     <title>注册</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+      type="text/css"
+    />
   </head>
 
   <body>
-    <h1>注册</h1>
+    <h1>语音转文字服务器</h1>
+    {% for message in get_flashed_messages() %}
+    <div class="alert">{{ message }}</div>
+    {% endfor %}
+    <nav>
+      <ul>
+        <li><a href="{{ url_for('index') }}">主页</a></li>
+        {% if current_user.is_authenticated %}
+        <li><a href="{{ url_for('signout') }}">登出</a></li>
+        {% else %}
+        <li><a href="{{ url_for('signin') }}">登录</a></li>
+        <li><a href="{{ url_for('signup') }}">注册</a></li>
+        {% endif %}
+      </ul>
+    </nav>
     <form method="post">
       {{ form.csrf_token }}
       <label for="username">用户名</label>

@@ -67,7 +67,6 @@ def index():
         text = infer(f.filename)
         return render_template('index.html', infer_info="识别结果：" + text)
     else:
-
         return render_template('index.html')
 
 
@@ -123,6 +122,18 @@ def signout():
     logout_user()
     flash('再见!')
     return redirect(url_for('index'))
+
+
+@app.context_processor
+def inject_user():  # 函数名可以随意修改
+    user = User.query.first()
+    return dict(user=user)  # 需要返回字典，等同于 return {'user': user}
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    user = User.query.first()
+    return render_template('404.html'), 404
 
 
 def infer(file):
