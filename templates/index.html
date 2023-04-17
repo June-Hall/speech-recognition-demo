@@ -6,13 +6,9 @@
   </head>
   <body>
     <h1>语音转文字服务器</h1>
-    {% with messages = get_flashed_messages(with_categories=true, category_filter=["error", "success"]) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert {{ category }}">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+    {% for message in get_flashed_messages() %}
+    <div class="alert">{{ message }}</div>
+    {% endfor %}
     <nav>
         <ul>
             <li><a href="{{ url_for('index') }}">主页</a></li>
@@ -26,15 +22,9 @@
     </nav>
     <form action="http://localhost:5000/" method="POST" enctype="multipart/form-data">
     <input type="file" name="file"  />
-    <input type="submit" value="提交" onclick="showMsg()" />
+    <input type="submit" value="提交" />
     <div class="info">
       {{ infer_info }}
     </div>
   </body>
 </html>
-
-<script>
-  function showMsg(){
-    alert("文件正在上传，请稍后...");
-  }
-</script>

@@ -99,3 +99,14 @@ h3,
   padding: 12px 24px;
   border-bottom: 1px solid #ddd;
 }
+
+.error {
+  text-align: middle;
+  padding-bottom: 0.3em;
+  font-size: 1.5em;
+  line-height: 1.43;
+  margin: 2.4em auto 1.2em;
+  color: #333;
+  padding: 12px 24px;
+  border-bottom: 1px solid #ddd;
+}
