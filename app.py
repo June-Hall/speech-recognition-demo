@@ -4,6 +4,7 @@ import deepspeech
 import wave
 from pydub import AudioSegment
 import numpy as np
+import sounddevice as sd
 
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
@@ -136,17 +137,52 @@ def inject_user():  # 函数名可以随意修改
 
 @app.errorhandler(400)
 def bad_request(e):
-    return render_template('errors/400.html'), 400
+    return render_template('400.html'), 400
 
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('errors/404.html'), 404
+    return render_template('404.html'), 404
 
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    return render_template('errors/500.html'), 500
+    return render_template('500.html'), 500
+
+@app.route('/record', methods=['POST'])
+def record():
+    # 初始化 DeepSpeech 模型
+    model_path = 'DeepSpeech/deepspeech-0.9.3-models.pbmm'  # 模型文件路径
+    beam_width = 500
+    model = deepspeech.Model(model_path)
+    model.setBeamWidth(beam_width)
+
+    # 录制音频并进行识别
+    duration = 10  # 录制时长（秒）
+    sample_rate = 16000  # 采样率
+    channels = 1  # 音频通道数
+
+    def audio_callback(indata, frames, time, status):
+        audio_data.append(indata.copy())
+
+    # 创建录音缓冲区
+    audio_data = []
+
+    # 录制音频
+    with sd.InputStream(samplerate=sample_rate, channels=channels, callback=audio_callback):
+        print("开始录音...")
+        sd.sleep(duration * 1000)
+        print("录音完成.")
+
+    # 将录音数据转换为 numpy 数组
+    audio_data = np.concatenate(audio_data)
+    audio_data = np.ravel(audio_data)
+    audio_data = (audio_data * 32767).astype(np.int16)
+
+    # 语音识别
+    text = model.stt(audio_data)
+    print("识别结果：", text)
+    return text
 
 
 def infer(file):
@@ -188,6 +224,8 @@ def infer(file):
                 'audio', filename + ".wav"), format='wav')
 
             audio_path = os.path.join('audio', filename + ".wav")
+            print('*'*100, audio_path)
+        elif (audio_path.endswith(".wav")):
             print('*'*100, audio_path)
         else:
             raise Exception

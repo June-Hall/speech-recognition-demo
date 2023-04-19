@@ -15,6 +15,8 @@
     {% endfor %}
     <div class="alert" id="loading" style="display: none">文件正在上传...</div>
     <div class="alert" id="load-done" style="display: none">文件上传成功！</div>
+    <div class="alert" id="recording" style="display: none">正在录音...</div>
+    <div class="alert" id="recorded" style="display: none">录音成功！</div>
     <div class="alert" id="infering" style="display: none">正在推理文件...</div>
     <div class="alert" id="infer-success" style="display: none">推理成功！</div>
     <div class="alert" id="infer-failure" style="display: none">推理失败！</div>
@@ -30,10 +32,17 @@
       </ul>
     </nav>
     {% if current_user.is_authenticated %}
-    <form id="upload-form" enctype="multipart/form-data">
-      <input type="file" name="file" />
-      <input type="button" id="upload-btn" value="提交" />
-    </form>
+    <div class="upload-container">
+      <form id="upload-form" enctype="multipart/form-data">
+        <input type="file" name="file" />
+        <input type="button" id="upload-btn" value="提交" />
+      </form>
+    </div>
+    <div class="record-container">
+      <input type="checkbox" name="checkbox" class="checkbox" id="checkbox" />
+      <label for="checkbox" id="record-btn"> </label>
+      <span class="record-cue">点击录制</span>
+    </div>
     <div id="progress"></div>
     <div class="info" id="infer-info"></div>
     {% else %}
@@ -92,6 +101,40 @@
           $("#load-done").hide();
           $("#infering").hide();
           $("#infer-failure").show();
+          progress_bar.css("width", "0%");
+        },
+      });
+    });
+  });
+
+  $(document).ready(function () {
+    $("#record-btn").click(function () {
+      // 显示"正在录制"提示
+      $("#recording").show();
+
+      setTimeout(function () {
+        $("#checkbox").prop("checked", false);
+      }, 7000);
+
+      // 调用record函数，可以使用Ajax发送POST请求到服务器
+      $.ajax({
+        url: "/record", // 修改为您的服务器端处理录制功能的URL
+        type: "POST",
+
+        success: function (response) {
+          // 录制成功后的处理逻辑，例如隐藏"正在录制"提示，并显示识别结果
+          $("#recording").hide();
+          $("#recorded").html("录音成功！").show();
+          $("#infer-info").html("识别结果：" + response);
+
+          progress_bar.css("width", "0%");
+        },
+        error: function (xhr, status, error) {
+          // 录制失败后的处理逻辑，例如隐藏"正在录制"提示，并显示错误提示
+          $("#recording").hide();
+          $("#recorded")
+            .html("录音失败！错误信息：" + error)
+            .show();
           progress_bar.css("width", "0%");
         },
       });

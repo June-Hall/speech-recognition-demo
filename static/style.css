@@ -118,3 +118,59 @@ h3,
   transition: width 0.3s ease-in-out;
   border-radius: 25px;
 }
+
+.checkbox {
+  display: none;
+}
+.checkbox + label {
+  --size: 90%;
+  --radius: 50%;
+  border: 6px solid #333;
+  border-radius: var(--radius);
+  cursor: pointer;
+  display: inline-block;
+  height: 20px;
+  width: 20px;
+  position: relative;
+}
+.checkbox + label:before {
+  background-color: red;
+  border-radius: var(--radius);
+  bottom: 0;
+  content: " ";
+  height: var(--size);
+  left: 0;
+  margin: auto;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: all 0.25s cubic-bezier(1, 0, 0, 0.2);
+  width: var(--size);
+}
+.checkbox:checked + label {
+  animation: 0.15s ripple 0.25s;
+}
+.checkbox:checked + label:before {
+  --size: 50%;
+  --radius: 10%;
+  transform: rotateZ(180deg);
+}
+
+.record-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 5px;
+  margin-top: 20px;
+}
+
+.record-cue {
+  text-align: left;
+  font-size: 16px;
+  line-height: 0.4em;
+  margin: 1.4em 12px 1.2em 0;
+  color: #333;
+  padding: 12px 24px;
+}

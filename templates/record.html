@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>录音</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+      type="text/css"
+    />
+  </head>
+  <body>
+    <h1>语音转文字服务器</h1>
+    {% for message in get_flashed_messages() %}
+    <div class="alert">{{ message }}</div>
+    {% endfor %}
+    <nav>
+      <ul>
+        <li><a href="{{ url_for('index') }}">主页</a></li>
+        {% if current_user.is_authenticated %}
+        <li><a href="{{ url_for('signout') }}">登出</a></li>
+        {% else %}
+        <li><a href="{{ url_for('signin') }}">登录</a></li>
+        <li><a href="{{ url_for('signup') }}">注册</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+    <button id="record-btn">录制</button>
+    <script>
+      // 获取 "录制" 按钮
+      var recordBtn = document.getElementById("record-btn");
+
+      // 定义录音状态和 MediaRecorder 对象
+      var isRecording = false;
+      var mediaRecorder;
+
+      // 当点击 "录制" 按钮时
+      recordBtn.addEventListener("click", function () {
+        if (!isRecording) {
+          // 开始录音
+          navigator.mediaDevices
+            .getUserMedia({ audio: true })
+            .then(function (stream) {
+              mediaRecorder = new MediaRecorder(stream);
+              mediaRecorder.start();
+              isRecording = true;
+              recordBtn.textContent = "停止";
+            })
+            .catch(function (error) {
+              console.error("录音失败：", error);
+            });
+        } else {
+          // 停止录音
+          mediaRecorder.stop();
+          isRecording = false;
+          recordBtn.textContent = "录制";
+        }
+      });
+
+      // 当录音完成时
+      mediaRecorder.addEventListener("dataavailable", function (event) {
+        // 将录音数据转换成 Blob 对象
+        var blob = new Blob([event.data], { type: "audio/webm" });
+
+        // 创建 FormData 对象，用于将录音文件作为请求发送到服务器
+        var formData = new FormData();
+        formData.append("file", blob);
+
+        // 发送请求到服务器
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/record", true);
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+            // 录音文件上传成功
+            console.log("录音文件上传成功");
+          }
+        };
+        xhr.send(formData);
+      });
+    </script>
+  </body>
+</html>
