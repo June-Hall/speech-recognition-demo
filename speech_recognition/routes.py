@@ -6,51 +6,14 @@ from pydub import AudioSegment
 import numpy as np
 import sounddevice as sd
 
-from flask import Flask, render_template, request, redirect, url_for, flash
-from flask_sqlalchemy import SQLAlchemy
-from flask_wtf import FlaskForm
+from flask import render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Length, EqualTo
-from flask_login import login_user, LoginManager, UserMixin, login_required, logout_user, current_user
+from flask_login import login_user, login_required, logout_user
 
 
-# init
-app = Flask(__name__)
-
-app.config['UPLOAD_FOLDER'] = '/Users/duke/Desktop/learn/code/python/python选修/final/speech-recognition-demo/audio/'
-app.config['SECRET_KEY'] = 'dev'  # 等同于 app.secret_key = 'dev'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////' + \
-    os.path.join(app.root_path, 'data.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-db = SQLAlchemy(app)
-
-login_manager = LoginManager(app)
-
-# models
-
-
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
-
-
-class SigninForm(FlaskForm):
-    username = StringField('用户名', validators=[DataRequired()])
-    password = PasswordField('密码', validators=[DataRequired()])
-    submit = SubmitField('登录')
-
-
-class SignupForm(FlaskForm):
-    username = StringField(
-        '用户名', validators=[DataRequired(), Length(min=3, max=20)])
-    password = PasswordField('密码', validators=[DataRequired(), Length(min=6)])
-    confirm_password = PasswordField(
-        '确认密码', validators=[DataRequired(), EqualTo('password')])
-    submit = SubmitField('注册')
+from speech_recognition import app, db
+from speech_recognition.models import SigninForm, SignupForm, User
 
 
 # routes
@@ -67,17 +30,11 @@ def uploads():
             raise Exception
     except Exception:
         exit()
-    print('hr3')
     file.save(os.path.join(
         app.config['UPLOAD_FOLDER'], secure_filename(file.filename)))
     text = infer(file.filename)
 
     return text
-
-
-@login_manager.user_loader
-def get_user(ident):
-    return User.query.get(int(ident))
 
 
 @app.route('/signin', methods=['GET', 'POST'])
@@ -129,30 +86,10 @@ def signout():
     return redirect(url_for('index'))
 
 
-@app.context_processor
-def inject_user():  # 函数名可以随意修改
-    user = User.query.first()
-    return dict(user=user)  # 需要返回字典，等同于 return {'user': user}
-
-
-@app.errorhandler(400)
-def bad_request(e):
-    return render_template('400.html'), 400
-
-
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html'), 404
-
-
-@app.errorhandler(500)
-def internal_server_error(e):
-    return render_template('500.html'), 500
-
 @app.route('/record', methods=['POST'])
 def record():
     # 初始化 DeepSpeech 模型
-    model_path = 'DeepSpeech/deepspeech-0.9.3-models.pbmm'  # 模型文件路径
+    model_path = 'speech_recognition/DeepSpeech/deepspeech-0.9.3-models.pbmm'  # 模型文件路径
     beam_width = 500
     model = deepspeech.Model(model_path)
     model.setBeamWidth(beam_width)
@@ -188,9 +125,8 @@ def record():
 def infer(file):
     # 定义语音文件路径
     # mp3 转换 wav
-    audio_path = os.path.join('audio', file)
+    audio_path = os.path.join('speech_recognition/audio', file)
     try:
-        print(audio_path.endswith(".mp3"))
         if (audio_path.endswith(".mp3")):
             pattern = re.compile(r'(.*)\.mp3')
             match = pattern.match(file)
@@ -199,8 +135,8 @@ def infer(file):
             wav_audio = AudioSegment.from_file(audio_path, format='mp3').set_frame_rate(
                 16000).set_channels(1).set_sample_width(2)
             wav_audio.export(os.path.join(
-                'audio', filename + ".wav"), format='wav')
-            audio_path = os.path.join('audio', filename + ".wav")
+                'speech_recognition/audio', filename + ".wav"), format='wav')
+            audio_path = os.path.join('speech_recognition/audio', filename + ".wav")
             print('*'*100, audio_path)
         elif (audio_path.endswith(".ogg")):
             pattern = re.compile(r'(.*)\.ogg')
@@ -210,8 +146,8 @@ def infer(file):
             wav_audio = AudioSegment.from_file(audio_path, format='ogg').set_frame_rate(
                 16000).set_channels(1).set_sample_width(2)
             wav_audio.export(os.path.join(
-                'audio', filename + ".wav"), format='wav')
-            audio_path = os.path.join('audio', filename + ".wav")
+                'speech_recognition/audio', filename + ".wav"), format='wav')
+            audio_path = os.path.join('speech_recognition/audio', filename + ".wav")
             print('*'*100, audio_path)
         elif (audio_path.endswith(".raw")):
             pattern = re.compile(r'(.*)\.raw')
@@ -221,9 +157,9 @@ def infer(file):
             wav_audio = AudioSegment.from_file(
                 audio_path, format='raw').set_frame_rate(16000).set_channels(1).set_sample_width(2)
             wav_audio.export(os.path.join(
-                'audio', filename + ".wav"), format='wav')
+                'speech_recognition/audio', filename + ".wav"), format='wav')
 
-            audio_path = os.path.join('audio', filename + ".wav")
+            audio_path = os.path.join('speech_recognition/audio', filename + ".wav")
             print('*'*100, audio_path)
         elif (audio_path.endswith(".wav")):
             print('*'*100, audio_path)
@@ -234,7 +170,7 @@ def infer(file):
         exit()
 
     # 加载 DeepSpeech 模型
-    model_path = 'DeepSpeech/deepspeech-0.9.3-models.pbmm'
+    model_path = 'speech_recognition/DeepSpeech/deepspeech-0.9.3-models.pbmm'
     beam_width = 500
     model = deepspeech.Model(model_path)
     model.beamWidth = beam_width
@@ -256,8 +192,3 @@ def logout():
     logout_user()
     flash('Goodbye.')
     return redirect(url_for('index'))
-
-
-# run
-if __name__ == '__main__':
-    app.run()
