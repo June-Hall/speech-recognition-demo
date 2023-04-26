@@ -4,15 +4,13 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 
-# from speech_recognition.models import User
-
 # init
 app = Flask(__name__)
 
 app.config['UPLOAD_FOLDER'] = '/Users/duke/Desktop/learn/code/python/python选修/final/speech-recognition-demo/speech_recognition/audio/'
 app.config['SECRET_KEY'] = 'dev'  # 等同于 app.secret_key = 'dev'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////' + \
-    os.path.join(app.root_path, 'data.db')
+    os.path.join(app.root_path, 'data.db')  # windows需要改成 sqlite:///，macos需要改成 sqlite:////
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
